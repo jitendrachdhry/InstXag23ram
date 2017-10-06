@@ -1,15 +1,22 @@
 package x23.instxag23ram;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 public class X23MainActivity extends AppCompatActivity {
+
+    //Register the app by following below link.
+    //http://instagram.com/developer/
+    //After registration copy client_id, client_secret and callback_rul from instagram Manage Client page.
+
+    public static final String X23_IG_CLIENT_ID = "19ac6ed774524e5c97798c5d20dfaa6c";
+    public static final String X23_IG_CLIENT_SECRET = "2f193576dd0341508fc4062bbe5d5464";
+    public static final String X23_IG_CALLBACK_URL = "https://www.23andme.com/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,15 +24,6 @@ public class X23MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_x23_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
     }
 
     @Override
@@ -43,10 +41,19 @@ public class X23MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_exit) {
+            // Exit from X23MainActivity
+            finish();
             return true;
+        } else if (id == R.id.action_about) {
+            Toast toast = Toast.makeText(getApplicationContext(), getResources().getString(R.string.action_about_txt), Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
+        } else if (id == R.id.action_help) {
+            Toast toast = Toast.makeText(getApplicationContext(), getResources().getString(R.string.action_help_txt), Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
         }
-
         return super.onOptionsItemSelected(item);
     }
 }
