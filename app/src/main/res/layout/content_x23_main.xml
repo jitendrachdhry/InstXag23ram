@@ -10,7 +10,7 @@
     tools:showIn="@layout/activity_x23_main">
 
     <Button
-        android:id="@+id/connect"
+        android:id="@+id/connectIG"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/connect_instagram"

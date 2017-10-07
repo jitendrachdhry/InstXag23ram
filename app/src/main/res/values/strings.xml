@@ -6,4 +6,7 @@
     <string name="action_help">Help</string>
     <string name="action_help_txt">For help please visit https://www.23andme.com/</string>
     <string name="action_about_txt">X23MainActivity v0.1</string>
+    <string name="cancel">Cancel</string>
+    <string name="login">Instagram Login</string>
+
 </resources>
