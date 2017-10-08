@@ -9,6 +9,31 @@
     tools:context="x23.instxag23ram.X23MainActivity"
     tools:showIn="@layout/activity_x23_main">
 
+    <LinearLayout
+        android:id="@+id/showFeatureListIG"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/showImagesIG"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="40dip"
+            android:layout_marginRight="40dip"
+            android:text="@string/show_photos" />
+
+        <Button
+            android:id="@+id/disconnectIG"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="40dip"
+            android:layout_marginRight="40dip"
+            android:text="@string/disconnect" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/connectIG"
         android:layout_width="wrap_content"
@@ -18,5 +43,4 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
 </android.support.constraint.ConstraintLayout>

@@ -8,5 +8,12 @@
     <string name="action_about_txt">X23MainActivity v0.1</string>
     <string name="cancel">Cancel</string>
     <string name="login">Instagram Login</string>
+    <string name="show_photos">Show Photos</string>
+    <string name="disconnect">Disconnect Instagram</string>
+    <string name="connecting">Connecting...</string>
+    <string name="error_access_token">InstXag23ram: Failed to get access token</string>
+    <string name="error_user_info">InstXag23ram: Failed to get user information</string>
+    <string name="error_page_loading">InstXag23ram: Failed to load web page ...</string>
+
 
 </resources>

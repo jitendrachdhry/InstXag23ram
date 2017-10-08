@@ -4,6 +4,8 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -12,34 +14,86 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+import org.json.JSONTokener;
+
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+
+import static x23.instxag23ram.X23Credentials.X23_IG_API_URL;
 import static x23.instxag23ram.X23Credentials.X23_IG_AUTH_URL;
 import static x23.instxag23ram.X23Credentials.X23_IG_CALLBACK_URL;
 import static x23.instxag23ram.X23Credentials.X23_IG_CLIENT_ID;
+import static x23.instxag23ram.X23Credentials.X23_IG_CLIENT_SECRET;
+import static x23.instxag23ram.X23Credentials.X23_IG_TOKEN_URL;
+import static x23.instxag23ram.X23Credentials.mCallbackUrl;
 
-public class X23MainActivity extends AppCompatActivity {
+public class X23MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     //Register the app by following below link.
     //http://instagram.com/developer/
     //After registration copy client_id, client_secret and callback_rul from instagram Manage Client page.
 
-    public static final String TAG = "OAuthWebViewClient";
+    public static final String TAG = "X23MainActivity";
+
+    public static final String TAG_DATA = "data";
+    public static final String TAG_ID = "id";
+    public static final String TAG_PROFILE_PICTURE = "profile_picture";
+    public static final String TAG_USERNAME = "username";
+    public static final String TAG_BIO = "bio";
+    public static final String TAG_WEBSITE = "website";
+    public static final String TAG_COUNTS = "counts";
+    public static final String TAG_FOLLOWS = "follows";
+    public static final String TAG_FOLLOWED_BY = "followed_by";
+    public static final String TAG_MEDIA = "media";
+    public static final String TAG_FULL_NAME = "full_name";
+    public static final String TAG_META = "meta";
+    public static final String TAG_CODE = "code";
+    static int WHAT_FINALIZE = 0;
+    static int WHAT_ERROR = 1;
+    private static int WHAT_FETCH_INFO = 2;
     private String mAuthUrl;
     private String mTokenUrl;
     private String mAccessToken;
     //Create a dialog object, that will contain the WebView
     private Dialog webViewDialog;
-    private ProgressDialog mSpinner;
+    private ProgressDialog mDialogSpinner;
+    private ProgressDialog mConnectSpinner;
+    private InstagramSession mSession;
+    private HashMap<String, String> mUserInfo = new HashMap<String, String>();
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == WHAT_ERROR) {
+                mConnectSpinner.dismiss();
+                if (msg.arg1 == 1) {
+                    Toast.makeText(getContext(), getString(R.string.error_user_info), Toast.LENGTH_SHORT).show();
+                } else if (msg.arg1 == 2) {
+                    Toast.makeText(getContext(), getString(R.string.error_access_token), Toast.LENGTH_SHORT).show();
+                }
+            } else if (msg.what == WHAT_FETCH_INFO) {
+                // fetchUserName();
+                mConnectSpinner.dismiss();
+                showIGFeatureUI();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_x23_main);
-
+        mSession = new InstagramSession(this);
         mAuthUrl = X23_IG_AUTH_URL
                 + "?client_id="
                 + X23_IG_CLIENT_ID
@@ -47,15 +101,20 @@ public class X23MainActivity extends AppCompatActivity {
                 + X23_IG_CALLBACK_URL
                 + "&response_type=code&display=touch&scope=likes+comments+relationships";
 
+        mTokenUrl = X23_IG_TOKEN_URL + "?client_id=" + X23_IG_CLIENT_ID + "&client_secret="
+                + X23_IG_CLIENT_SECRET + "&redirect_uri=" + mCallbackUrl
+                + "&grant_type=authorization_code";
+
         // mAuthUrl = X23_IG_CALLBACK_URL;
 
         Button buttonOne = (Button) findViewById(R.id.connectIG);
-        buttonOne.setOnClickListener(new Button.OnClickListener() {
-            public void onClick(View v) {
-                displayWebVidew();
+        buttonOne.setOnClickListener(this);
 
-            }
-        });
+        buttonOne = (Button) findViewById(R.id.disconnectIG);
+        buttonOne.setOnClickListener(this);
+
+        buttonOne = (Button) findViewById(R.id.showImagesIG);
+        buttonOne.setOnClickListener(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -71,9 +130,9 @@ public class X23MainActivity extends AppCompatActivity {
         //Create a new dialog
         webViewDialog = new Dialog(this);
 
-        mSpinner = new ProgressDialog(webViewDialog.getContext());
-        mSpinner.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        mSpinner.setMessage("Loading...");
+        mDialogSpinner = new ProgressDialog(webViewDialog.getContext());
+        mDialogSpinner.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        mDialogSpinner.setMessage("Loading...");
 
         //Remove the dialog's title
         webViewDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -113,6 +172,13 @@ public class X23MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new OAuthWebViewClient());
         webView.getSettings().setJavaScriptEnabled(true);
 
+        //TODO - Remove Cookie for fresh login.
+        //TODO - If we do not remove Cookie, disconnect user will not work.
+        //TODO - It always try to login again for last disconnected user.
+        CookieSyncManager.createInstance(getContext());
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.removeAllCookie();
+
         //Display the WebView dialog
         webViewDialog.show();
     }
@@ -148,6 +214,161 @@ public class X23MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    X23MainActivity getContext() {
+        return this;
+    }
+
+    private void getAccessToken(final String code) {
+
+
+        mConnectSpinner = new ProgressDialog(getContext());
+        mConnectSpinner.setCancelable(false);
+        mConnectSpinner.setTitle(getString(R.string.app_name));
+        mConnectSpinner.setMessage(getString(R.string.connecting));
+        mConnectSpinner.show();
+
+        new Thread() {
+            @Override
+            public void run() {
+                Log.i(TAG, "Getting access token");
+                int what = WHAT_FETCH_INFO;
+                try {
+                    URL url = new URL(X23_IG_TOKEN_URL);
+                    // URL url = new URL(mTokenUrl + "&code=" + code);
+                    Log.i(TAG, "Opening Token URL " + url.toString());
+                    HttpURLConnection urlConnection = (HttpURLConnection) url
+                            .openConnection();
+                    urlConnection.setRequestMethod("POST");
+                    urlConnection.setDoInput(true);
+                    urlConnection.setDoOutput(true);
+                    // urlConnection.connect();
+                    OutputStreamWriter writer = new OutputStreamWriter(
+                            urlConnection.getOutputStream());
+                    writer.write("client_id=" + X23_IG_CLIENT_ID + "&client_secret="
+                            + X23_IG_CLIENT_SECRET + "&grant_type=authorization_code"
+                            + "&redirect_uri=" + X23_IG_CALLBACK_URL + "&code=" + code);
+                    writer.flush();
+                    String response = Utils.streamToString(urlConnection
+                            .getInputStream());
+                    Log.i(TAG, "response from server:" + response);
+                    JSONObject jsonObj = (JSONObject) new JSONTokener(response)
+                            .nextValue();
+
+                    mAccessToken = jsonObj.getString("access_token");
+                    Log.i(TAG, "Got access token: " + mAccessToken);
+
+                    String id = jsonObj.getJSONObject("user").getString("id");
+                    String user = jsonObj.getJSONObject("user").getString(
+                            "username");
+                    String name = jsonObj.getJSONObject("user").getString(
+                            "full_name");
+
+                    mSession.storeAccessToken(mAccessToken, id, user, name);
+
+                } catch (Exception ex) {
+                    what = WHAT_ERROR;
+                    ex.printStackTrace();
+                }
+
+                mHandler.sendMessage(mHandler.obtainMessage(what, 1, 0));
+            }
+        }.start();
+    }
+
+    public void fetchUserName(final Handler handler) {
+
+        new Thread() {
+            @Override
+            public void run() {
+                Log.i(TAG, "Fetching user info");
+                int what = WHAT_FINALIZE;
+                try {
+                    URL url = new URL(X23_IG_API_URL + "/users/" + mSession.getId()
+                            + "/?access_token=" + mAccessToken);
+
+                    Log.d(TAG, "Opening URL " + url.toString());
+                    HttpURLConnection urlConnection = (HttpURLConnection) url
+                            .openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.setDoInput(true);
+                    urlConnection.connect();
+                    String response = Utils.streamToString(urlConnection
+                            .getInputStream());
+                    System.out.println(response);
+                    JSONObject jsonObj = (JSONObject) new JSONTokener(response)
+                            .nextValue();
+
+                    // String name = jsonObj.getJSONObject("data").getString(
+                    // "full_name");
+                    // String bio =
+                    // jsonObj.getJSONObject("data").getString("bio");
+                    // Log.i(TAG, "Got name: " + name + ", bio [" + bio + "]");
+                    JSONObject data_obj = jsonObj.getJSONObject(TAG_DATA);
+                    mUserInfo.put(TAG_ID, data_obj.getString(TAG_ID));
+
+                    mUserInfo.put(TAG_PROFILE_PICTURE,
+                            data_obj.getString(TAG_PROFILE_PICTURE));
+
+                    mUserInfo.put(TAG_USERNAME, data_obj.getString(TAG_USERNAME));
+
+                    mUserInfo.put(TAG_BIO, data_obj.getString(TAG_BIO));
+
+                    mUserInfo.put(TAG_WEBSITE, data_obj.getString(TAG_WEBSITE));
+
+                    JSONObject counts_obj = data_obj.getJSONObject(TAG_COUNTS);
+
+                    mUserInfo.put(TAG_FOLLOWS, counts_obj.getString(TAG_FOLLOWS));
+
+                    mUserInfo.put(TAG_FOLLOWED_BY,
+                            counts_obj.getString(TAG_FOLLOWED_BY));
+
+                    mUserInfo.put(TAG_MEDIA, counts_obj.getString(TAG_MEDIA));
+
+                    mUserInfo.put(TAG_FULL_NAME,
+                            data_obj.getString(TAG_FULL_NAME));
+
+                    JSONObject meta_obj = jsonObj.getJSONObject(TAG_META);
+
+                    mUserInfo.put(TAG_CODE, meta_obj.getString(TAG_CODE));
+                } catch (Exception ex) {
+                    what = WHAT_ERROR;
+                    ex.printStackTrace();
+                }
+                handler.sendMessage(handler.obtainMessage(what, 2, 0));
+            }
+        }.start();
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        if (view.getId() == R.id.connectIG) {
+            displayWebVidew();
+        } else if (view.getId() == R.id.disconnectIG) {
+            if (mSession.getAccessToken() != null) {
+                mSession.resetAccessToken();
+                hideIGFeatureUI();
+            }
+        } else if (view.getId() == R.id.showFeatureListIG) {
+
+        }
+    }
+
+    //
+    private void showIGFeatureUI() {
+        Button bt = (Button) findViewById(R.id.connectIG);
+        bt.setVisibility(View.GONE);
+        LinearLayout ll = (LinearLayout) findViewById(R.id.showFeatureListIG);
+        ll.setVisibility(View.VISIBLE);
+    }
+
+    private void hideIGFeatureUI() {
+        Button bt = (Button) findViewById(R.id.connectIG);
+        bt.setVisibility(View.VISIBLE);
+        LinearLayout ll = (LinearLayout) findViewById(R.id.showFeatureListIG);
+        ll.setVisibility(View.GONE);
+    }
+
     private class OAuthWebViewClient extends WebViewClient {
 
         @Override
@@ -156,8 +377,9 @@ public class X23MainActivity extends AppCompatActivity {
 
             if (url.startsWith(X23_IG_CALLBACK_URL)) {
                 String urls[] = url.split("=");
-                //    mListener.onComplete(urls[1]);
+                getAccessToken(urls[1]);
                 webViewDialog.dismiss();
+
                 return true;
             }
             return false;
@@ -166,18 +388,18 @@ public class X23MainActivity extends AppCompatActivity {
         @Override
         public void onReceivedError(WebView view, int errorCode,
                                     String description, String failingUrl) {
-            Log.d(TAG, "Page error: " + description);
+            Log.d(TAG, "Login Page error: " + description);
 
             super.onReceivedError(view, errorCode, description, failingUrl);
-            // mListener.onError(description);
-            // InstagramLoginDialog.this.dismiss();
+            webViewDialog.dismiss();
+            Toast.makeText(getContext(), getString(R.string.error_page_loading), Toast.LENGTH_SHORT).show();
         }
 
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
             Log.d(TAG, "Loading URL: " + url);
-            mSpinner.show();
+            mDialogSpinner.show();
         }
 
         @Override
@@ -185,9 +407,8 @@ public class X23MainActivity extends AppCompatActivity {
             super.onPageFinished(view, url);
             //String title = mDialogWebView.getTitle();
             Log.d(TAG, "onPageFinished URL: " + url);
-            mSpinner.dismiss();
+            mDialogSpinner.dismiss();
         }
 
     }
-
 }
