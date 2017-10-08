@@ -6,7 +6,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
-public class Utils {
+/**
+ * Created by JITENDRA KUMAR on 10/7/17.
+ */
+
+public class X23Utils {
     public static void CopyStream(InputStream is, OutputStream os) {
         final int buffer_size = 1024;
         try {

@@ -2,10 +2,16 @@ package x23.instxag23ram;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -38,6 +44,10 @@ import static x23.instxag23ram.X23Credentials.X23_IG_CLIENT_SECRET;
 import static x23.instxag23ram.X23Credentials.X23_IG_TOKEN_URL;
 import static x23.instxag23ram.X23Credentials.mCallbackUrl;
 
+/**
+ * Created by JITENDRA KUMAR on 10/7/17.
+ */
+
 public class X23MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     //Register the app by following below link.
@@ -59,30 +69,34 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
     public static final String TAG_FULL_NAME = "full_name";
     public static final String TAG_META = "meta";
     public static final String TAG_CODE = "code";
-    static int WHAT_FINALIZE = 0;
-    static int WHAT_ERROR = 1;
-    private static int WHAT_FETCH_INFO = 2;
+    static int X23_FETCH_INFO_DONE = 0;
+    static int X26_ERROR = 1;
+    private static int X23_FETCH_INFO_REQUEST = 2;
+    private final int STORAGE_PERMISSION_RC = 1001;
     private String mAuthUrl;
     private String mTokenUrl;
     private String mAccessToken;
+    private String mMediaId;
+    private boolean isWritePermission = false;
     //Create a dialog object, that will contain the WebView
     private Dialog webViewDialog;
     private ProgressDialog mDialogSpinner;
     private ProgressDialog mConnectSpinner;
-    private InstagramSession mSession;
+    private X23InstagramSession mSession;
     private HashMap<String, String> mUserInfo = new HashMap<String, String>();
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            if (msg.what == WHAT_ERROR) {
+            if (msg.what == X26_ERROR) {
                 mConnectSpinner.dismiss();
                 if (msg.arg1 == 1) {
                     Toast.makeText(getContext(), getString(R.string.error_user_info), Toast.LENGTH_SHORT).show();
                 } else if (msg.arg1 == 2) {
                     Toast.makeText(getContext(), getString(R.string.error_access_token), Toast.LENGTH_SHORT).show();
                 }
-            } else if (msg.what == WHAT_FETCH_INFO) {
-                // fetchUserName();
+            } else if (msg.what == X23_FETCH_INFO_REQUEST) {
+                fetchUserName();
+            } else if (msg.what == X23_FETCH_INFO_DONE) {
                 mConnectSpinner.dismiss();
                 showIGFeatureUI();
             }
@@ -93,7 +107,7 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_x23_main);
-        mSession = new InstagramSession(this);
+        mSession = new X23InstagramSession(this);
         mAuthUrl = X23_IG_AUTH_URL
                 + "?client_id="
                 + X23_IG_CLIENT_ID
@@ -172,13 +186,6 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
         webView.setWebViewClient(new OAuthWebViewClient());
         webView.getSettings().setJavaScriptEnabled(true);
 
-        //TODO - Remove Cookie for fresh login.
-        //TODO - If we do not remove Cookie, disconnect user will not work.
-        //TODO - It always try to login again for last disconnected user.
-        CookieSyncManager.createInstance(getContext());
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.removeAllCookie();
-
         //Display the WebView dialog
         webViewDialog.show();
     }
@@ -231,7 +238,7 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void run() {
                 Log.i(TAG, "Getting access token");
-                int what = WHAT_FETCH_INFO;
+                int what = X23_FETCH_INFO_REQUEST;
                 try {
                     URL url = new URL(X23_IG_TOKEN_URL);
                     // URL url = new URL(mTokenUrl + "&code=" + code);
@@ -248,7 +255,7 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
                             + X23_IG_CLIENT_SECRET + "&grant_type=authorization_code"
                             + "&redirect_uri=" + X23_IG_CALLBACK_URL + "&code=" + code);
                     writer.flush();
-                    String response = Utils.streamToString(urlConnection
+                    String response = X23Utils.streamToString(urlConnection
                             .getInputStream());
                     Log.i(TAG, "response from server:" + response);
                     JSONObject jsonObj = (JSONObject) new JSONTokener(response)
@@ -266,7 +273,7 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
                     mSession.storeAccessToken(mAccessToken, id, user, name);
 
                 } catch (Exception ex) {
-                    what = WHAT_ERROR;
+                    what = X26_ERROR;
                     ex.printStackTrace();
                 }
 
@@ -275,13 +282,13 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
         }.start();
     }
 
-    public void fetchUserName(final Handler handler) {
+    public void fetchUserName() {
 
         new Thread() {
             @Override
             public void run() {
                 Log.i(TAG, "Fetching user info");
-                int what = WHAT_FINALIZE;
+                int what = X23_FETCH_INFO_DONE;
                 try {
                     URL url = new URL(X23_IG_API_URL + "/users/" + mSession.getId()
                             + "/?access_token=" + mAccessToken);
@@ -292,7 +299,7 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
                     urlConnection.setRequestMethod("GET");
                     urlConnection.setDoInput(true);
                     urlConnection.connect();
-                    String response = Utils.streamToString(urlConnection
+                    String response = X23Utils.streamToString(urlConnection
                             .getInputStream());
                     System.out.println(response);
                     JSONObject jsonObj = (JSONObject) new JSONTokener(response)
@@ -331,10 +338,10 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
 
                     mUserInfo.put(TAG_CODE, meta_obj.getString(TAG_CODE));
                 } catch (Exception ex) {
-                    what = WHAT_ERROR;
+                    what = X26_ERROR;
                     ex.printStackTrace();
                 }
-                handler.sendMessage(handler.obtainMessage(what, 2, 0));
+                mHandler.sendMessage(mHandler.obtainMessage(what, 2, 0));
             }
         }.start();
 
@@ -343,17 +350,50 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.connectIG) {
-            displayWebVidew();
+
+            if (Build.VERSION.SDK_INT >= 23) {
+                if (ContextCompat.checkSelfPermission(X23MainActivity.this,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(X23MainActivity.this, android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(X23MainActivity.this,
+                            new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                    android.Manifest.permission.READ_EXTERNAL_STORAGE},
+                            STORAGE_PERMISSION_RC);
+                } else
+                    displayWebVidew();
+            }
         } else if (view.getId() == R.id.disconnectIG) {
             if (mSession.getAccessToken() != null) {
                 mSession.resetAccessToken();
+                //TODO - Remove Cookie for fresh login.
+                //TODO - If we do not remove Cookie, disconnect user will not work.
+                //TODO - It always try to login again for last disconnected user.
+                CookieSyncManager.createInstance(getContext());
+                CookieManager cookieManager = CookieManager.getInstance();
+                cookieManager.removeAllCookie();
                 hideIGFeatureUI();
             }
-        } else if (view.getId() == R.id.showFeatureListIG) {
-
+        } else if (view.getId() == R.id.showImagesIG) {
+            Intent lInt = new Intent(X23MainActivity.this, X23ShowPhotosActivity.class);
+            lInt.putExtra("userInfo", mUserInfo);
+            lInt.putExtra("session", mSession.getAccessToken());
+            startActivity(lInt);
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == STORAGE_PERMISSION_RC) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //permission granted start signin
+                displayWebVidew();
+            } else {
+                Toast.makeText(this, "No permission to read external storage. Please give permission to connect Instagram. Thanks", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
     //
     private void showIGFeatureUI() {
         Button bt = (Button) findViewById(R.id.connectIG);

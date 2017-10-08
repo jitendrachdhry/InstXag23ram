@@ -22,10 +22,10 @@ import static android.content.ContentValues.TAG;
 import static x23.instxag23ram.X23Credentials.X23_IG_CALLBACK_URL;
 
 /**
- * Created by ram on 10/6/17.
+ * Created by JITENDRA KUMAR  on 10/6/17.
  */
 
-public class InstagramLoginDialog extends DialogFragment {
+public class X23InstagramLoginDialog extends DialogFragment {
 
     static final FrameLayout.LayoutParams FILL = new FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -166,7 +166,7 @@ public class InstagramLoginDialog extends DialogFragment {
             if (url.startsWith(X23_IG_CALLBACK_URL)) {
                 String urls[] = url.split("=");
                 mListener.onComplete(urls[1]);
-                InstagramLoginDialog.this.dismiss();
+                X23InstagramLoginDialog.this.dismiss();
                 return true;
             }
 
@@ -182,7 +182,7 @@ public class InstagramLoginDialog extends DialogFragment {
 
             super.onReceivedError(view, errorCode, description, failingUrl);
             mListener.onError(description);
-            InstagramLoginDialog.this.dismiss();
+            X23InstagramLoginDialog.this.dismiss();
         }
 
         @Override
