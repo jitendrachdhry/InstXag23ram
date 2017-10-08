@@ -19,8 +19,6 @@ public class X26FileCache {
             cacheDir = context.getCacheDir();
         if (!cacheDir.exists())
             cacheDir.mkdirs();
-        if (!cacheDir.exists())
-            cacheDir.mkdirs();
     }
 
     public File getFile(String url) {

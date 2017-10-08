@@ -2,10 +2,13 @@ package x23.instxag23ram;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
 
@@ -27,19 +30,19 @@ import static x23.instxag23ram.X23Credentials.TAG_URL;
 import static x23.instxag23ram.X23Credentials.TAG_USER_HAS_LIKED;
 
 public class X23ShowPhotosActivity extends AppCompatActivity {
+    static final int SHOW_PHOTO_DETAIL_RESULT_REQUEST = 1;  // The request code to know if user like/unlike photo.
     private static int WHAT_ERROR = 1;
-    private GridView gvAllImages;
-    private HashMap<String, String> userInfo;
-    private ArrayList<String> imageThumbList = new ArrayList<String>();
-    private ArrayList<String> imageList = new ArrayList<String>();
-    private ArrayList<String> imageLikeCountList = new ArrayList<String>();
-    private ArrayList<String> imageCommentsCountList = new ArrayList<String>();
-    private ArrayList<String> imageUserHasLikedList = new ArrayList<String>();
-
+    private GridView mGVPhotos;
+    private HashMap<String, String> mUserInfo;
+    private ArrayList<String> mImageThumbList = new ArrayList<String>();
+    private ArrayList<String> mImageList = new ArrayList<String>();
+    private ArrayList<String> mImageLikeCountList = new ArrayList<String>();
+    private ArrayList<String> mImageCommentsCountList = new ArrayList<String>();
+    private ArrayList<String> mImageUserHasLikedList = new ArrayList<String>();
     private int WHAT_FINALIZE = 0;
     private ProgressDialog pd;
     private String mAccessToken;
-    private Handler handler = new Handler(new Handler.Callback() {
+    private Handler mHandler = new Handler(new Handler.Callback() {
 
         @Override
         public boolean handleMessage(Message msg) {
@@ -63,18 +66,32 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_x23_show_photos);
-        gvAllImages = (GridView) findViewById(R.id.showPhotosIG);
-        userInfo = (HashMap<String, String>) getIntent().getSerializableExtra(
+        mGVPhotos = (GridView) findViewById(R.id.showPhotosIG);
+        mUserInfo = (HashMap<String, String>) getIntent().getSerializableExtra(
                 "userInfo");
         mAccessToken = getIntent().getStringExtra(
                 "session");
         getAllMediaImages();
+
+        mGVPhotos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v,
+                                    int position, long id) {
+                Intent lInt = new Intent(X23ShowPhotosActivity.this, X25ShowPhotoDetailsActivity.class);
+                lInt.putExtra("UserHasLiked", mImageUserHasLikedList.get(position));
+                lInt.putExtra("commentsCount", Integer.parseInt(mImageCommentsCountList.get(position)));
+                lInt.putExtra("likesCount", Integer.parseInt(mImageLikeCountList.get(position)));
+                lInt.putExtra("position", position);
+                lInt.putExtra("url", mImageList.get(position));
+                startActivityForResult(lInt, SHOW_PHOTO_DETAIL_RESULT_REQUEST);
+            }
+        });
+
     }
 
     private void setImageGridAdapter() {
-        gvAllImages.setAdapter(new X23GridListAdapter(getContext(), imageThumbList, imageList, imageLikeCountList,
-                imageCommentsCountList, imageUserHasLikedList));
-        gvAllImages.invalidateViews();
+        mGVPhotos.setAdapter(new X23GridListAdapter(getContext(), mImageThumbList, mImageList, mImageLikeCountList,
+                mImageCommentsCountList, mImageUserHasLikedList));
+        mGVPhotos.invalidateViews();
     }
 
     private void getAllMediaImages() {
@@ -91,7 +108,7 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
 //https://api.instagram.com/v1/users/5811825526/media/recent/?access_token=5811825526.19ac6ed.4e8b5a395d5a4697b40fab9fde99a856
                     JSONObject jsonObject = jsonParser
                             .getJSONFromUrlByGet("https://api.instagram.com/v1/users/"
-                                    + userInfo.get(TAG_ID)
+                                    + mUserInfo.get(TAG_ID)
                                     + "/media/recent/?access_token="
                                     + mAccessToken);
                     JSONArray data = jsonObject.getJSONArray(TAG_DATA);
@@ -120,20 +137,20 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
                         // thumbnail_obj.getString(TAG_WIDTH);
 
                         String str_url = thumbnail_obj.getString(TAG_URL);
-                        imageThumbList.add(str_url);
+                        mImageThumbList.add(str_url);
 
                         str_url = data_obj
                                 .getString(TAG_USER_HAS_LIKED);
-                        imageUserHasLikedList.add(str_url);
+                        mImageUserHasLikedList.add(str_url);
 
                         str_url = images_url_obj.getString(TAG_URL);
-                        imageList.add(str_url);
+                        mImageList.add(str_url);
 
                         str_url = like_obj.getString(TAG_COUNT);
-                        imageLikeCountList.add(str_url);
+                        mImageLikeCountList.add(str_url);
 
                         str_url = comments_obj.getString(TAG_COUNT);
-                        imageCommentsCountList.add(str_url);
+                        mImageCommentsCountList.add(str_url);
 
                     }
 
@@ -144,8 +161,27 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
                     what = WHAT_ERROR;
                 }
                 // pd.dismiss();
-                handler.sendEmptyMessage(what);
+                mHandler.sendEmptyMessage(what);
             }
         }).start();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Check which request we're responding to
+        if (requestCode == SHOW_PHOTO_DETAIL_RESULT_REQUEST) {
+            // Make sure the request was successful
+            if (resultCode == RESULT_OK) {
+                // The user picked a contact.
+                // The Intent's data Uri identifies which contact was selected.
+                int pos = data.getIntExtra("position", -1);
+                if (pos >= 0) {
+                    int likesCount = data.getIntExtra("likesCount", 0);
+                    mImageLikeCountList.set(pos, Integer.toString(likesCount));
+                    mImageUserHasLikedList.set(pos, data.getStringExtra("userHasLiked"));
+                }
+                mGVPhotos.invalidateViews();
+            }
+        }
     }
 }

@@ -27,13 +27,15 @@ public class X25ImageLoader {
     X25MemoryCache x25MemoryCache = new X25MemoryCache();
     X26FileCache x26FileCache;
     ExecutorService executorService;
+    boolean isImageCropRequested;
     Handler handler = new Handler();// handler to display images in UI thread
     private Map<ImageView, String> imageViews = Collections
             .synchronizedMap(new WeakHashMap<ImageView, String>());
 
-    public X25ImageLoader(Context context) {
+    public X25ImageLoader(Context context, boolean isImageCropRequested) {
         x26FileCache = new X26FileCache(context);
         executorService = Executors.newFixedThreadPool(5);
+        this.isImageCropRequested = isImageCropRequested;
     }
 
     public void DisplayImage(String url, ImageView imageView) {
@@ -89,30 +91,40 @@ public class X25ImageLoader {
         try {
             // decode image size
             BitmapFactory.Options o = new BitmapFactory.Options();
+            Bitmap bitmap;
             o.inJustDecodeBounds = true;
             FileInputStream stream1 = new FileInputStream(f);
-            BitmapFactory.decodeStream(stream1, null, o);
+            bitmap = BitmapFactory.decodeStream(stream1, null, o);
             stream1.close();
 
             // Find the correct scale value. It should be the power of 2.
             final int REQUIRED_SIZE = 70;
             int width_tmp = o.outWidth, height_tmp = o.outHeight;
             int scale = 1;
-            while (true) {
-                if (width_tmp / 2 < REQUIRED_SIZE
-                        || height_tmp / 2 < REQUIRED_SIZE)
-                    break;
-                width_tmp /= 2;
-                height_tmp /= 2;
-                scale *= 2;
+            if (isImageCropRequested) {
+                while (true) {
+                    if (width_tmp / 2 < REQUIRED_SIZE
+                            || height_tmp / 2 < REQUIRED_SIZE)
+                        break;
+                    width_tmp /= 2;
+                    height_tmp /= 2;
+                    scale *= 2;
+                }
+            } else {
+                // decode with inSampleSize
+                FileInputStream stream2 = new FileInputStream(f);
+                bitmap = BitmapFactory.decodeStream(stream2);
+                stream2.close();
+                return bitmap;
             }
 
             // decode with inSampleSize
             BitmapFactory.Options o2 = new BitmapFactory.Options();
             o2.inSampleSize = scale;
             FileInputStream stream2 = new FileInputStream(f);
-            Bitmap bitmap = BitmapFactory.decodeStream(stream2, null, o2);
+            bitmap = BitmapFactory.decodeStream(stream2, null, o2);
             stream2.close();
+
             return bitmap;
         } catch (FileNotFoundException e) {
         } catch (IOException e) {

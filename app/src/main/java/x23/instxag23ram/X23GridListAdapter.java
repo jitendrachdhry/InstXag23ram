@@ -32,7 +32,7 @@ public class X23GridListAdapter extends BaseAdapter {
         this.imageCommentsCountList = imageCommentsCountList;
         this.imageUserHasLikedList = imageUserHasLikedList;
 
-        this.x25ImageLoader = new X25ImageLoader(context);
+        this.x25ImageLoader = new X25ImageLoader(context, true);
     }
 
     @Override
