@@ -12,6 +12,9 @@ import java.util.ArrayList;
 public class X23GridListAdapter extends BaseAdapter {
     // private Context context;
     private ArrayList<String> imageThumbList;
+    private ArrayList<String> imageThumbLikeCountList;
+    private ArrayList<String> imageThumbCommentsCountList;
+
     private LayoutInflater inflater;
     private X25ImageLoader x25ImageLoader;
 
