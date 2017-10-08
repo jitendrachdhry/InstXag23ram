@@ -15,16 +15,27 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class X23ShowPhotosActivity extends AppCompatActivity {
+import static x23.instxag23ram.X23Credentials.TAG_COMMENTS;
+import static x23.instxag23ram.X23Credentials.TAG_COUNT;
+import static x23.instxag23ram.X23Credentials.TAG_DATA;
+import static x23.instxag23ram.X23Credentials.TAG_ID;
+import static x23.instxag23ram.X23Credentials.TAG_IMAGES;
+import static x23.instxag23ram.X23Credentials.TAG_LIKES;
+import static x23.instxag23ram.X23Credentials.TAG_STAND_RESO;
+import static x23.instxag23ram.X23Credentials.TAG_THUMBNAIL;
+import static x23.instxag23ram.X23Credentials.TAG_URL;
+import static x23.instxag23ram.X23Credentials.TAG_USER_HAS_LIKED;
 
-    public static final String TAG_DATA = "data";
-    public static final String TAG_IMAGES = "images";
-    public static final String TAG_THUMBNAIL = "thumbnail";
-    public static final String TAG_URL = "url";
+public class X23ShowPhotosActivity extends AppCompatActivity {
     private static int WHAT_ERROR = 1;
     private GridView gvAllImages;
     private HashMap<String, String> userInfo;
     private ArrayList<String> imageThumbList = new ArrayList<String>();
+    private ArrayList<String> imageList = new ArrayList<String>();
+    private ArrayList<String> imageLikeCountList = new ArrayList<String>();
+    private ArrayList<String> imageCommentsCountList = new ArrayList<String>();
+    private ArrayList<String> imageUserHasLikedList = new ArrayList<String>();
+
     private int WHAT_FINALIZE = 0;
     private ProgressDialog pd;
     private String mAccessToken;
@@ -61,7 +72,8 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
     }
 
     private void setImageGridAdapter() {
-        gvAllImages.setAdapter(new X23GridListAdapter(getContext(), imageThumbList));
+        gvAllImages.setAdapter(new X23GridListAdapter(getContext(), imageThumbList, imageList, imageLikeCountList,
+                imageCommentsCountList, imageUserHasLikedList));
         gvAllImages.invalidateViews();
     }
 
@@ -79,7 +91,7 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
 //https://api.instagram.com/v1/users/5811825526/media/recent/?access_token=5811825526.19ac6ed.4e8b5a395d5a4697b40fab9fde99a856
                     JSONObject jsonObject = jsonParser
                             .getJSONFromUrlByGet("https://api.instagram.com/v1/users/"
-                                    + userInfo.get(X23MainActivity.TAG_ID)
+                                    + userInfo.get(TAG_ID)
                                     + "/media/recent/?access_token="
                                     + mAccessToken);
                     JSONArray data = jsonObject.getJSONArray(TAG_DATA);
@@ -92,6 +104,15 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
                         JSONObject thumbnail_obj = images_obj
                                 .getJSONObject(TAG_THUMBNAIL);
 
+                        JSONObject images_url_obj = images_obj
+                                .getJSONObject(TAG_STAND_RESO);
+
+                        JSONObject like_obj = data_obj
+                                .getJSONObject(TAG_LIKES);
+
+                        JSONObject comments_obj = data_obj
+                                .getJSONObject(TAG_COMMENTS);
+
                         // String str_height =
                         // thumbnail_obj.getString(TAG_HEIGHT);
                         //
@@ -100,6 +121,20 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
 
                         String str_url = thumbnail_obj.getString(TAG_URL);
                         imageThumbList.add(str_url);
+
+                        str_url = data_obj
+                                .getString(TAG_USER_HAS_LIKED);
+                        imageUserHasLikedList.add(str_url);
+
+                        str_url = images_url_obj.getString(TAG_URL);
+                        imageList.add(str_url);
+
+                        str_url = like_obj.getString(TAG_COUNT);
+                        imageLikeCountList.add(str_url);
+
+                        str_url = comments_obj.getString(TAG_COUNT);
+                        imageCommentsCountList.add(str_url);
+
                     }
 
                     System.out.println("jsonObject::" + jsonObject);

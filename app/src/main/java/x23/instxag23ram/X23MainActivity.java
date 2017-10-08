@@ -36,6 +36,19 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 
+import static x23.instxag23ram.X23Credentials.TAG_BIO;
+import static x23.instxag23ram.X23Credentials.TAG_CODE;
+import static x23.instxag23ram.X23Credentials.TAG_COUNTS;
+import static x23.instxag23ram.X23Credentials.TAG_DATA;
+import static x23.instxag23ram.X23Credentials.TAG_FOLLOWED_BY;
+import static x23.instxag23ram.X23Credentials.TAG_FOLLOWS;
+import static x23.instxag23ram.X23Credentials.TAG_FULL_NAME;
+import static x23.instxag23ram.X23Credentials.TAG_ID;
+import static x23.instxag23ram.X23Credentials.TAG_MEDIA;
+import static x23.instxag23ram.X23Credentials.TAG_META;
+import static x23.instxag23ram.X23Credentials.TAG_PROFILE_PICTURE;
+import static x23.instxag23ram.X23Credentials.TAG_USERNAME;
+import static x23.instxag23ram.X23Credentials.TAG_WEBSITE;
 import static x23.instxag23ram.X23Credentials.X23_IG_API_URL;
 import static x23.instxag23ram.X23Credentials.X23_IG_AUTH_URL;
 import static x23.instxag23ram.X23Credentials.X23_IG_CALLBACK_URL;
@@ -43,7 +56,6 @@ import static x23.instxag23ram.X23Credentials.X23_IG_CLIENT_ID;
 import static x23.instxag23ram.X23Credentials.X23_IG_CLIENT_SECRET;
 import static x23.instxag23ram.X23Credentials.X23_IG_TOKEN_URL;
 import static x23.instxag23ram.X23Credentials.mCallbackUrl;
-
 /**
  * Created by JITENDRA KUMAR on 10/7/17.
  */
@@ -56,19 +68,6 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
 
     public static final String TAG = "X23MainActivity";
 
-    public static final String TAG_DATA = "data";
-    public static final String TAG_ID = "id";
-    public static final String TAG_PROFILE_PICTURE = "profile_picture";
-    public static final String TAG_USERNAME = "username";
-    public static final String TAG_BIO = "bio";
-    public static final String TAG_WEBSITE = "website";
-    public static final String TAG_COUNTS = "counts";
-    public static final String TAG_FOLLOWS = "follows";
-    public static final String TAG_FOLLOWED_BY = "followed_by";
-    public static final String TAG_MEDIA = "media";
-    public static final String TAG_FULL_NAME = "full_name";
-    public static final String TAG_META = "meta";
-    public static final String TAG_CODE = "code";
     static int X23_FETCH_INFO_DONE = 0;
     static int X26_ERROR = 1;
     private static int X23_FETCH_INFO_REQUEST = 2;
