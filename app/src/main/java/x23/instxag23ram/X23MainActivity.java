@@ -122,8 +122,6 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
                 + X23_IG_CLIENT_SECRET + "&redirect_uri=" + mCallbackUrl
                 + "&grant_type=authorization_code";
 
-        // mAuthUrl = X23_IG_CALLBACK_URL;
-
         Button buttonOne = (Button) findViewById(R.id.connectIG);
         buttonOne.setOnClickListener(this);
 
@@ -257,27 +255,21 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
                     urlConnection.setDoInput(true);
                     urlConnection.setDoOutput(true);
                     // urlConnection.connect();
-                    OutputStreamWriter writer = new OutputStreamWriter(
-                            urlConnection.getOutputStream());
+                    OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream());
                     writer.write("client_id=" + X23_IG_CLIENT_ID + "&client_secret="
                             + X23_IG_CLIENT_SECRET + "&grant_type=authorization_code"
                             + "&redirect_uri=" + X23_IG_CALLBACK_URL + "&code=" + code);
                     writer.flush();
-                    String response = X23Utils.streamToString(urlConnection
-                            .getInputStream());
+                    String response = X23Utils.streamToString(urlConnection.getInputStream());
                     Log.i(TAG, "response from server:" + response);
-                    JSONObject jsonObj = (JSONObject) new JSONTokener(response)
-                            .nextValue();
+                    JSONObject jsonObj = (JSONObject) new JSONTokener(response).nextValue();
 
                     mAccessToken = jsonObj.getString("access_token");
                     Log.i(TAG, "Got access token: " + mAccessToken);
 
                     String id = jsonObj.getJSONObject("user").getString("id");
-                    String user = jsonObj.getJSONObject("user").getString(
-                            "username");
-                    String name = jsonObj.getJSONObject("user").getString(
-                            "full_name");
-
+                    String user = jsonObj.getJSONObject("user").getString("username");
+                    String name = jsonObj.getJSONObject("user").getString("full_name");
                     mSession.storeAccessToken(mAccessToken, id, user, name);
 
                 } catch (Exception ex) {
@@ -358,13 +350,7 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
             if (mSession.getAccessToken() != null) {
                 mSession.resetAccessToken();
                 mUserInfoSP.resetUserInfo();
-
-                // - Remove Cookie for fresh login.
-                // - If we do not remove Cookie, disconnect user will not work.
-                // - It always try to login again for last disconnected user.
-                CookieSyncManager.createInstance(getContext());
-                CookieManager cookieManager = CookieManager.getInstance();
-                cookieManager.removeAllCookie();
+                removeCookies();
                 hideIGFeatureUI();
             }
         } else if (view.getId() == R.id.showImagesIG) {
@@ -373,6 +359,15 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
             lInt.putExtra("session", mSession.getAccessToken());
             startActivity(lInt);
         }
+    }
+
+    private void removeCookies() {
+        // - Remove Cookie for fresh login.
+        // - If we do not remove Cookie, disconnect user will not work.
+        // - It always try to login again for last disconnected user.
+        CookieSyncManager.createInstance(getContext());
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.removeAllCookie();
     }
 
     @Override
@@ -412,7 +407,6 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
                 String urls[] = url.split("=");
                 getAccessToken(urls[1]);
                 webViewDialog.dismiss();
-
                 return true;
             }
             return false;
@@ -422,7 +416,6 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
         public void onReceivedError(WebView view, int errorCode,
                                     String description, String failingUrl) {
             Log.d(TAG, "Login Page error: " + description);
-
             super.onReceivedError(view, errorCode, description, failingUrl);
             webViewDialog.dismiss();
             Toast.makeText(getContext(), getString(R.string.error_page_loading), Toast.LENGTH_SHORT).show();

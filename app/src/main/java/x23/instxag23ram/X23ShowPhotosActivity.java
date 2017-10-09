@@ -119,26 +119,11 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
                     for (int data_i = 0; data_i < data.length(); data_i++) {
                         JSONObject data_obj = data.getJSONObject(data_i);
 
-                        JSONObject images_obj = data_obj
-                                .getJSONObject(TAG_IMAGES);
-
-                        JSONObject thumbnail_obj = images_obj
-                                .getJSONObject(TAG_THUMBNAIL);
-
-                        JSONObject images_url_obj = images_obj
-                                .getJSONObject(TAG_STAND_RESO);
-
-                        JSONObject like_obj = data_obj
-                                .getJSONObject(TAG_LIKES);
-
-                        JSONObject comments_obj = data_obj
-                                .getJSONObject(TAG_COMMENTS);
-
-                        // String str_height =
-                        // thumbnail_obj.getString(TAG_HEIGHT);
-                        //
-                        // String str_width =
-                        // thumbnail_obj.getString(TAG_WIDTH);
+                        JSONObject images_obj = data_obj.getJSONObject(TAG_IMAGES);
+                        JSONObject thumbnail_obj = images_obj.getJSONObject(TAG_THUMBNAIL);
+                        JSONObject images_url_obj = images_obj.getJSONObject(TAG_STAND_RESO);
+                        JSONObject like_obj = data_obj.getJSONObject(TAG_LIKES);
+                        JSONObject comments_obj = data_obj.getJSONObject(TAG_COMMENTS);
 
                         String str_url = thumbnail_obj.getString(TAG_URL);
                         mImageThumbList.add(str_url);
@@ -159,14 +144,12 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
                         mImageCommentsCountList.add(str_url);
 
                     }
-
-                    System.out.println("jsonObject::" + jsonObject);
+//                    System.out.println("jsonObject::" + jsonObject);
 
                 } catch (Exception exception) {
                     exception.printStackTrace();
                     what = WHAT_ERROR;
                 }
-                // pd.dismiss();
                 mHandler.sendEmptyMessage(what);
             }
         }).start();

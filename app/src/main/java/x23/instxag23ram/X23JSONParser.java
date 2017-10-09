@@ -20,18 +20,15 @@ import java.net.ProtocolException;
 import java.net.URL;
 
 public class X23JSONParser {
-
-    static InputStream is = null;
-    static JSONObject jObj = null;
-    static String json = "";
-
     // constructor
     public X23JSONParser() {
 
     }
 
     public JSONObject getJSONFromUrlByGet(String url) {
-
+        InputStream is = null;
+        JSONObject jObj = null;
+        String json = "";
         // Making HTTP request
         try {
             URL urlObj = new URL(url);
@@ -66,7 +63,6 @@ public class X23JSONParser {
         } catch (JSONException e) {
             Log.e("JSON Parser", "Error parsing data " + e.toString());
         }
-
         // return JSON String
         return jObj;
 
