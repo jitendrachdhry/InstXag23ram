@@ -16,7 +16,6 @@
         android:layout_marginTop="10dip"
         android:background="#66ff4081"
         android:orientation="horizontal">
-        android:background="#66ff4081">
 
         <ImageView
             android:id="@+id/likeIG"

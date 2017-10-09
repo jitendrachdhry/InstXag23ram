@@ -4,15 +4,18 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.net.URLEncoder;
 
 public class X25ShowPhotoDetailsActivity extends AppCompatActivity implements View.OnClickListener {
 
     private boolean mUserHasLiked;
     private int mLikesCount, mCommentsCount, mPosition;
-    private String mImgUrl;
+    private String mImgUrl, mId, mAccessToken;
     private X25ImageLoader x25ImageLoader;
 
     @Override
@@ -25,6 +28,9 @@ public class X25ShowPhotoDetailsActivity extends AppCompatActivity implements Vi
         mCommentsCount = getIntent().getIntExtra("commentsCount", 0);
         mPosition = getIntent().getIntExtra("position", 0);
         mImgUrl = getIntent().getStringExtra("url");
+        mId = getIntent().getStringExtra("id");
+        mAccessToken = getIntent().getStringExtra("access_token");
+
         x25ImageLoader = new X25ImageLoader(X25ShowPhotoDetailsActivity.this, false);
         setLikeImageViewListener();
         setPhotoLayoutDetails();
@@ -39,6 +45,7 @@ public class X25ShowPhotoDetailsActivity extends AppCompatActivity implements Vi
             setLikeImage();
             mLikesCount += mUserHasLiked ? 1 : -1;
             setLikeCountText();
+            setPhotoLike();
         }
     }
 
@@ -88,5 +95,30 @@ public class X25ShowPhotoDetailsActivity extends AppCompatActivity implements Vi
             returnIntent.putExtra("userHasLiked", "false");
         setResult(Activity.RESULT_OK, returnIntent);
         super.onBackPressed();
+    }
+
+    private void setPhotoLike() {
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    X23JSONParser jp = new X23JSONParser();
+                    if (mUserHasLiked) {
+                        String url = "https://api.instagram.com/v1/media/" + mId + "/likes";
+                        String postData = URLEncoder.encode("access_token", "UTF-8") + "=" +
+                                URLEncoder.encode(mAccessToken, "UTF-8");
+                        String response = jp.getStringFromUrlByPost(url, postData, "POST");
+                        Log.d("X25ShowPhoto", response);
+                    } else {
+                        String url = "https://api.instagram.com/v1/media/" + mId + "/likes?access_token=" + mAccessToken;
+                        String response = jp.getStringFromUrlByPost(url, null, "DELETE");
+                        Log.d("X25ShowPhoto", response);
+                    }
+                } catch (Exception io) {
+                    Log.d("X25ShowPhoto", io.toString());
+                }
+            }
+        }).start();
     }
 }

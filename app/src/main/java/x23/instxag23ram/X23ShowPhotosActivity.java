@@ -35,6 +35,7 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
     private GridView mGVPhotos;
     private HashMap<String, String> mUserInfo;
     private ArrayList<String> mImageThumbList = new ArrayList<String>();
+    private ArrayList<String> mImageMediaIdList = new ArrayList<String>();
     private ArrayList<String> mImageList = new ArrayList<String>();
     private ArrayList<String> mImageLikeCountList = new ArrayList<String>();
     private ArrayList<String> mImageCommentsCountList = new ArrayList<String>();
@@ -82,6 +83,9 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
                 lInt.putExtra("likesCount", Integer.parseInt(mImageLikeCountList.get(position)));
                 lInt.putExtra("position", position);
                 lInt.putExtra("url", mImageList.get(position));
+                lInt.putExtra("id", mImageMediaIdList.get(position));
+                lInt.putExtra("access_token", mAccessToken);
+
                 startActivityForResult(lInt, SHOW_PHOTO_DETAIL_RESULT_REQUEST);
             }
         });
@@ -139,8 +143,10 @@ public class X23ShowPhotosActivity extends AppCompatActivity {
                         String str_url = thumbnail_obj.getString(TAG_URL);
                         mImageThumbList.add(str_url);
 
-                        str_url = data_obj
-                                .getString(TAG_USER_HAS_LIKED);
+                        str_url = data_obj.getString(TAG_ID);
+                        mImageMediaIdList.add(str_url);
+
+                        str_url = data_obj.getString(TAG_USER_HAS_LIKED);
                         mImageUserHasLikedList.add(str_url);
 
                         str_url = images_url_obj.getString(TAG_URL);

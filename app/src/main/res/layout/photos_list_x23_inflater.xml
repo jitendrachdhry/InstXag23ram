@@ -17,26 +17,30 @@
 
         <ImageView
             android:id="@+id/likeIG"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:src="@drawable/like_small" />
 
         <TextView
             android:id="@+id/likeCountTxt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="1" />
 
         <ImageView
             android:id="@+id/commentsIG"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:src="@drawable/comments_small" />
 
         <TextView
             android:id="@+id/commentsCountTxt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="10" />
     </LinearLayout>
 
