@@ -82,7 +82,8 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
     private ProgressDialog mDialogSpinner;
     private ProgressDialog mConnectSpinner;
     private X23InstagramSession mSession;
-    private HashMap<String, String> mUserInfo = new HashMap<String, String>();
+    private X23InstagramUserInfo mUserInfoSP;
+    private HashMap<String, String> mUserInfo;
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -107,6 +108,9 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_x23_main);
         mSession = new X23InstagramSession(this);
+        mUserInfoSP = new X23InstagramUserInfo(getContext());
+        mUserInfo = new HashMap<String, String>();
+
         mAuthUrl = X23_IG_AUTH_URL
                 + "?client_id="
                 + X23_IG_CLIENT_ID
@@ -129,11 +133,17 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
         buttonOne = (Button) findViewById(R.id.showImagesIG);
         buttonOne.setOnClickListener(this);
 
+        //No need to login again if user already signed in.
+        if (mSession.getAccessToken() != null) {
+            showIGFeatureUI();
+            mUserInfoSP.initUserInfo(mUserInfo);
+        }
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
     }
 
-    private void displayWebVidew() {
+    private void displayWebView() {
         //a WebView object to display a web page
         WebView webView;
         //The button to launch the WebView dialog
@@ -229,7 +239,6 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
 
         mConnectSpinner = new ProgressDialog(getContext());
         mConnectSpinner.setCancelable(false);
-        mConnectSpinner.setTitle(getString(R.string.app_name));
         mConnectSpinner.setMessage(getString(R.string.connecting));
         mConnectSpinner.show();
 
@@ -293,49 +302,30 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
                             + "/?access_token=" + mAccessToken);
 
                     Log.d(TAG, "Opening URL " + url.toString());
-                    HttpURLConnection urlConnection = (HttpURLConnection) url
-                            .openConnection();
+                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.setRequestMethod("GET");
                     urlConnection.setDoInput(true);
                     urlConnection.connect();
-                    String response = X23Utils.streamToString(urlConnection
-                            .getInputStream());
-                    System.out.println(response);
-                    JSONObject jsonObj = (JSONObject) new JSONTokener(response)
-                            .nextValue();
+                    String response = X23Utils.streamToString(urlConnection.getInputStream());
 
-                    // String name = jsonObj.getJSONObject("data").getString(
-                    // "full_name");
-                    // String bio =
-                    // jsonObj.getJSONObject("data").getString("bio");
-                    // Log.i(TAG, "Got name: " + name + ", bio [" + bio + "]");
+                    JSONObject jsonObj = (JSONObject) new JSONTokener(response).nextValue();
                     JSONObject data_obj = jsonObj.getJSONObject(TAG_DATA);
                     mUserInfo.put(TAG_ID, data_obj.getString(TAG_ID));
-
-                    mUserInfo.put(TAG_PROFILE_PICTURE,
-                            data_obj.getString(TAG_PROFILE_PICTURE));
-
+                    mUserInfo.put(TAG_PROFILE_PICTURE, data_obj.getString(TAG_PROFILE_PICTURE));
                     mUserInfo.put(TAG_USERNAME, data_obj.getString(TAG_USERNAME));
-
                     mUserInfo.put(TAG_BIO, data_obj.getString(TAG_BIO));
-
                     mUserInfo.put(TAG_WEBSITE, data_obj.getString(TAG_WEBSITE));
 
                     JSONObject counts_obj = data_obj.getJSONObject(TAG_COUNTS);
-
                     mUserInfo.put(TAG_FOLLOWS, counts_obj.getString(TAG_FOLLOWS));
-
-                    mUserInfo.put(TAG_FOLLOWED_BY,
-                            counts_obj.getString(TAG_FOLLOWED_BY));
-
+                    mUserInfo.put(TAG_FOLLOWED_BY, counts_obj.getString(TAG_FOLLOWED_BY));
                     mUserInfo.put(TAG_MEDIA, counts_obj.getString(TAG_MEDIA));
-
-                    mUserInfo.put(TAG_FULL_NAME,
-                            data_obj.getString(TAG_FULL_NAME));
+                    mUserInfo.put(TAG_FULL_NAME, data_obj.getString(TAG_FULL_NAME));
 
                     JSONObject meta_obj = jsonObj.getJSONObject(TAG_META);
-
                     mUserInfo.put(TAG_CODE, meta_obj.getString(TAG_CODE));
+
+                    mUserInfoSP.initByUserInfo(mUserInfo);
                 } catch (Exception ex) {
                     what = X26_ERROR;
                     ex.printStackTrace();
@@ -360,14 +350,18 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
                                     android.Manifest.permission.READ_EXTERNAL_STORAGE},
                             STORAGE_PERMISSION_RC);
                 } else
-                    displayWebVidew();
+                    displayWebView();
+            } else {
+                displayWebView();
             }
         } else if (view.getId() == R.id.disconnectIG) {
             if (mSession.getAccessToken() != null) {
                 mSession.resetAccessToken();
-                //TODO - Remove Cookie for fresh login.
-                //TODO - If we do not remove Cookie, disconnect user will not work.
-                //TODO - It always try to login again for last disconnected user.
+                mUserInfoSP.resetUserInfo();
+
+                // - Remove Cookie for fresh login.
+                // - If we do not remove Cookie, disconnect user will not work.
+                // - It always try to login again for last disconnected user.
                 CookieSyncManager.createInstance(getContext());
                 CookieManager cookieManager = CookieManager.getInstance();
                 cookieManager.removeAllCookie();
@@ -387,7 +381,7 @@ public class X23MainActivity extends AppCompatActivity implements View.OnClickLi
         if (requestCode == STORAGE_PERMISSION_RC) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 //permission granted start signin
-                displayWebVidew();
+                displayWebView();
             } else {
                 Toast.makeText(this, "No permission to read external storage. Please give permission to connect Instagram. Thanks", Toast.LENGTH_SHORT).show();
             }
