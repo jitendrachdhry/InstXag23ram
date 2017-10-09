@@ -1,22 +1,43 @@
 package x23.instxag23ram;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.net.URLEncoder;
 
+import static x23.instxag23ram.X23MainActivity.X26_ERROR;
+
 public class X25ShowPhotoDetailsActivity extends AppCompatActivity implements View.OnClickListener {
 
+    public static int X26_UPDATE_DONE = 2;
     private boolean mUserHasLiked;
     private int mLikesCount, mCommentsCount, mPosition;
     private String mImgUrl, mId, mAccessToken;
     private X25ImageLoader x25ImageLoader;
+    private ProgressDialog mAddDeleteLikeSpinner;
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == X26_ERROR) {
+                Toast.makeText(getContext(), getString(R.string.connection_error), Toast.LENGTH_SHORT).show();
+            } else if (msg.what == X26_UPDATE_DONE) {
+                mUserHasLiked = !mUserHasLiked;
+                setLikeImage();
+                mLikesCount += mUserHasLiked ? 1 : -1;
+                setLikeCountText();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,17 +57,20 @@ public class X25ShowPhotoDetailsActivity extends AppCompatActivity implements Vi
         setPhotoLayoutDetails();
         setLikeImageViewListener();
         updateImage();
+        mAddDeleteLikeSpinner = new ProgressDialog(X25ShowPhotoDetailsActivity.this);
+        mAddDeleteLikeSpinner.setCancelable(false);
+        mAddDeleteLikeSpinner.setMessage(getString(R.string.updating));
     }
 
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.likeIG) {
-            mUserHasLiked = !mUserHasLiked;
-            setLikeImage();
-            mLikesCount += mUserHasLiked ? 1 : -1;
-            setLikeCountText();
             setPhotoLike();
         }
+    }
+
+    private X25ShowPhotoDetailsActivity getContext() {
+        return X25ShowPhotoDetailsActivity.this;
     }
 
     private void setPhotoLayoutDetails() {
@@ -97,27 +121,37 @@ public class X25ShowPhotoDetailsActivity extends AppCompatActivity implements Vi
         super.onBackPressed();
     }
 
+    //Start a new thread for Instagram like POST API callback.
     private void setPhotoLike() {
+        mAddDeleteLikeSpinner.show();
+
         new Thread(new Runnable() {
 
             @Override
             public void run() {
+                String response = null;
                 try {
+                    //https://www.instagram.com/developer/endpoints/likes/#post_likes
                     X23JSONParser jp = new X23JSONParser();
-                    if (mUserHasLiked) {
+                    if (!mUserHasLiked) {
                         String url = "https://api.instagram.com/v1/media/" + mId + "/likes";
                         String postData = URLEncoder.encode("access_token", "UTF-8") + "=" +
                                 URLEncoder.encode(mAccessToken, "UTF-8");
-                        String response = jp.getStringFromUrlByPost(url, postData, "POST");
+                        response = jp.getStringFromUrlByPost(url, postData, "POST");
                         Log.d("X25ShowPhoto", response);
                     } else {
                         String url = "https://api.instagram.com/v1/media/" + mId + "/likes?access_token=" + mAccessToken;
-                        String response = jp.getStringFromUrlByPost(url, null, "DELETE");
+                        response = jp.getStringFromUrlByPost(url, null, "DELETE");
                         Log.d("X25ShowPhoto", response);
                     }
                 } catch (Exception io) {
                     Log.d("X25ShowPhoto", io.toString());
                 }
+                mAddDeleteLikeSpinner.dismiss();
+                if (response != null && response.contains("200")) {
+                    mHandler.sendMessage(mHandler.obtainMessage(X26_UPDATE_DONE, 1, 0));
+                } else
+                    mHandler.sendMessage(mHandler.obtainMessage(X26_ERROR, 1, 0));
             }
         }).start();
     }

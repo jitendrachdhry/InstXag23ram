@@ -11,6 +11,7 @@
     <string name="show_photos">Show Photos</string>
     <string name="disconnect">Disconnect Instagram</string>
     <string name="connecting">Connecting...</string>
+    <string name="updating">Updating Information...</string>
     <string name="error_access_token">InstXag23ram: Failed to get access token</string>
     <string name="error_user_info">InstXag23ram: Failed to get user information</string>
     <string name="error_page_loading">InstXag23ram: Failed to load web page ...</string>
@@ -28,5 +29,6 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
+    <string name="connection_error">Connection Error. Please try again. Thanks.</string>
 
 </resources>
