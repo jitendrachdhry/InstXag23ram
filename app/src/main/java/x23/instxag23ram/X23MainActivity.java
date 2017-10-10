@@ -36,6 +36,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 
+import x23.instxag23ram.core.X23InstagramSession;
+import x23.instxag23ram.core.X23InstagramUserInfo;
+import x23.instxag23ram.core.X23Utils;
+
 import static x23.instxag23ram.X23Credentials.TAG_BIO;
 import static x23.instxag23ram.X23Credentials.TAG_CODE;
 import static x23.instxag23ram.X23Credentials.TAG_COUNTS;

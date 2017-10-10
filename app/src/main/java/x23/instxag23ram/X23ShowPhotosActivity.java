@@ -18,6 +18,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import x23.instxag23ram.core.X23JSONParser;
+
 import static x23.instxag23ram.X23Credentials.TAG_COMMENTS;
 import static x23.instxag23ram.X23Credentials.TAG_COUNT;
 import static x23.instxag23ram.X23Credentials.TAG_DATA;

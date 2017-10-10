@@ -15,6 +15,9 @@ import android.widget.Toast;
 
 import java.net.URLEncoder;
 
+import x23.instxag23ram.core.X23JSONParser;
+import x23.instxag23ram.core.X25ImageLoader;
+
 import static x23.instxag23ram.X23MainActivity.X26_ERROR;
 
 public class X25ShowPhotoDetailsActivity extends AppCompatActivity implements View.OnClickListener {

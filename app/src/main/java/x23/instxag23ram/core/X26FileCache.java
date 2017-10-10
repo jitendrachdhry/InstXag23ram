@@ -1,4 +1,4 @@
-package x23.instxag23ram;
+package x23.instxag23ram.core;
 
 import android.content.Context;
 

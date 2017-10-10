@@ -6,8 +6,6 @@
     <string name="action_help">Help</string>
     <string name="action_help_txt">For help please visit https://www.23andme.com/</string>
     <string name="action_about_txt">X23MainActivity v0.1</string>
-    <string name="cancel">Cancel</string>
-    <string name="login">Instagram Login</string>
     <string name="show_photos">Show Photos</string>
     <string name="disconnect">Disconnect Instagram</string>
     <string name="connecting">Connecting...</string>
@@ -15,20 +13,8 @@
     <string name="error_access_token">InstXag23ram: Failed to get access token</string>
     <string name="error_user_info">InstXag23ram: Failed to get user information</string>
     <string name="error_page_loading">InstXag23ram: Failed to load web page ...</string>
-    <string name="title_activity_login">Sign in</string>
 
     <!-- Strings related to login -->
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password (optional)</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="error_invalid_email">This email address is invalid</string>
-    <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_password">This password is incorrect</string>
-    <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
     <string name="connection_error">Connection Error. Please try again. Thanks.</string>
 
 </resources>

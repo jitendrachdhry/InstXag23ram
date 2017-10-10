@@ -1,4 +1,4 @@
-package x23.instxag23ram;
+package x23.instxag23ram.core;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import x23.instxag23ram.R;
 
 public class X25ImageLoader {
 

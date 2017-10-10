@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import x23.instxag23ram.core.X25ImageLoader;
+
 public class X23GridListAdapter extends BaseAdapter {
     // private Context context;
     private ArrayList<String> imageThumbList;
